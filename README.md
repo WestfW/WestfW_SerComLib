@@ -1,4 +1,4 @@
-# Arduin_sercomlib #
+# Arduino_sercomlib #
 
 Many SAMD based Arduino boards have uncommitted SERCOM peripherals, or
 SERCOMs that are theoretically aimed at a a particular purpose (I2C,
@@ -10,7 +10,11 @@ UART) and ISR functions.
 If a particular SERCOM is in use for another purpose (for example, you cannot include the Wire library AND redefine the I2C pins as a UART), you will get "multiply defined symbol" errors from the link stage of the build process.
 
 ## Basic Operation ##
+
 There are several forms of the macros provided.  Which one to use depends on how much as already been defined in the board's variant.h file.
+
+All of these require the SERCOM number, either a constant or a preprocessor definition that evaluates to a number, since the macros use "macro magic" to construct the proper ISR names (SERCOM1_Handler or similar.)  It is unfortunate that you can not provide a Sercom data structure.  This means that if you want to redefine the i2c pins as a UART, you need to look into the variant.h file to see which
+
 sercom_MakeUart(int _sercomNum, int _serNumber)
 sercom_MakeUart_Pins(_sercomNum, _serName, _rx, _tx)
 #define sercom_MakeUart_Pads(_sercomNum, _serName, _rx, _tx, _rxpad, _txpad)
