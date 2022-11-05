@@ -16,6 +16,6 @@ There are several forms of the macros provided.  Which one to use depends on how
 All of these require the SERCOM number, either a constant or a preprocessor definition that evaluates to a number, since the macros use "macro magic" to construct the proper ISR names (SERCOM1_Handler or similar.)  It is unfortunate that you can not provide a Sercom data structure.  This means that if you want to redefine the i2c pins as a UART, you need to look into the variant.h file to see which
 
 ### sercom\_MakeUart(sercomNumber, SerialNumber) ###
-### sercom\_MakeUart_Pins(sercomNumber, SerialName rxPin, txPin) ###
+### sercom\_MakeUart_Pins(sercomNumber, SerialName, rxPin, txPin) ###
 ### sercom\_MakeUart_Pads(sercomNumber,  SerialName, rxPin, txPin, rxPad, txPad) ###
 ### sercom\_MakeWire_Pins(sercomNumber, _i2cName, _sda, _scl) ###
