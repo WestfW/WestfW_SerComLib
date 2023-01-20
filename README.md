@@ -1,4 +1,4 @@
-# Arduino\_sercomlib #
+# WestfW\_SerComLib #
 
 Many SAMD based Arduino boards have uncommitted SERCOM peripherals, or
 SERCOMs that are theoretically aimed at a a particular purpose (I2C,
