@@ -1,13 +1,14 @@
 /*
  * sercomlib.h
- * April 2021, by Bill Westfield
+ * July 2020 - Jan 2023, by Bill Westfield
  * Released to the public domain.
  *
  * This defines macros to pair up "un-used" sercom interfaces with
- *  Arduino driver-level definitions like UART/HardwareSerial
+ *  Arduino driver-level definitions like UART/HardwareSerial, on
+ *  SAMD51-based boards.
  *
  *  Use it like:
- *     sercom_MakeUart(sercomNumber, SerialNumber)
+ *     sercom_MakeSerial(sercomNumber, SerialNumber)
  *  It's all relatively ugly pre-processor magic, and it
  *  assumes that symbols like sercomN, (from variant.cpp)
  *  and PIN_SERIALn_TX, PIN_SERIALn_TX (from variant.h)
@@ -21,72 +22,74 @@
 
 #include <variant.h>
 
-#if SAMD51_SERIES
+#if SAMD51_SERIES || defined(_SAMD51_)
 // Use this form where there are pre-defined PIN_SERIALn_RX and
 //   PIN_SERIALn_TX symbols
-// Example: sercom_MakeUart(3, 4)
-//          (create Serial4 bound to Sercom3)
-#define sercom_MakeUart(_sercomNum, _serialNum)                         \
-  Uart Serial##_serialNum( &sercom##_sercomNum, PIN_SERIAL##_serialNum##_RX, \
-                           PIN_SERIAL##_serialNum##_TX,                 \
-                           SERCOM_RX_PAD_1, UART_TX_PAD_0 ) ;           \
-  void SERCOM##_sercomNum##_0_Handler(void) {  Serial##_serialNum.IrqHandler(); } \
-  void SERCOM##_sercomNum##_1_Handler(void) {  Serial##_serialNum.IrqHandler(); } \
-  void SERCOM##_sercomNum##_2_Handler(void) {  Serial##_serialNum.IrqHandler(); } \
-  void SERCOM##_sercomNum##_3_Handler(void) {  Serial##_serialNum.IrqHandler(); }
+#define SERCOMLIB_MakeSerial(_sercom, _serialNum) \
+  Uart Serial##_serialNum( &sercom##_sercom, PIN_SERIAL##_serialNum##_RX, \
+                           PIN_SERIAL##_serialNum##_TX,                   \
+                           SERCOM_RX_PAD_1, UART_TX_PAD_0 ) ;             \
+  void SERCOM##_sercom##_0_Handler(void) {  Serial##_serialNum.IrqHandler(); } \
+  void SERCOM##_sercom##_1_Handler(void) {  Serial##_serialNum.IrqHandler(); } \
+  void SERCOM##_sercom##_2_Handler(void) {  Serial##_serialNum.IrqHandler(); } \
+  void SERCOM##_sercom##_3_Handler(void) {  Serial##_serialNum.IrqHandler(); }
 
 // Use this form to specify the TX and RX pin numbers (Arduino Pin numbers.)
-// Example: sercom_MakeUart_Pins(3, SerialXX, 1, 2)
-//          (create SerialXX bound to Sercom3 on pins 1 and 2)
-#define sercom_MakeUart_Pins(_sercomNum, _serName, _rx, _tx)            \
-  Uart _serName( &sercom##_sercomNum, _rx, _tx, SERCOM_RX_PAD_1, UART_TX_PAD_0 ) ; \
-  void SERCOM##_sercomNum##_0_Handler(void) {  _serName.IrqHandler(); } \
-  void SERCOM##_sercomNum##_1_Handler(void) {  _serName.IrqHandler(); } \
-  void SERCOM##_sercomNum##_2_Handler(void) {  _serName.IrqHandler(); } \
-  void SERCOM##_sercomNum##_3_Handler(void) {  _serName.IrqHandler(); }
+#define SERCOMLIB_MakeSerialPins(_sercom, _serialNum, _rx, _tx) \
+  Uart Serial##_serialNum( &sercom##_sercom, _rx, _tx, SERCOM_RX_PAD_1, UART_TX_PAD_0 ) ; \
+  void SERCOM##_sercom##_0_Handler(void) {  Serial##_serialNum.IrqHandler(); } \
+  void SERCOM##_sercom##_1_Handler(void) {  Serial##_serialNum.IrqHandler(); } \
+  void SERCOM##_sercom##_2_Handler(void) {  Serial##_serialNum.IrqHandler(); } \
+  void SERCOM##_sercom##_3_Handler(void) {  Serial##_serialNum.IrqHandler(); }
 
 // Use this form to specify the TX and RX pin numbers AND PAD designators
 //  Note that on SAMD51, the TX pad is fixed.
-// Example: sercom_MakeUart_Pins(3, SerialXX, 1, 2)
-//          (create SerialXX bound to Sercom3 on pins 1 and 2)
-#define sercom_MakeUart_Pads(_sercomNum, _serName, _rx, _tx, _rxpad, _txpad) \
-  Uart _serName( &sercom##_sercomNum, _rx, _tx, _txpad, _txpad ) ;      \
-  void SERCOM##_sercomNum##_0_Handler(void) {  _serName.IrqHandler(); } \
-  void SERCOM##_sercomNum##_1_Handler(void) {  _serName.IrqHandler(); } \
-  void SERCOM##_sercomNum##_2_Handler(void) {  _serName.IrqHandler(); } \
-  void SERCOM##_sercomNum##_3_Handler(void) {  _serName.IrqHandler(); }
+#define SERCOMLIB_MakeSerialPinsPads(_sercom, _serialNum, _rx, _tx, _rxpad, _txpad) \
+  Uart Serial##_serialNum( &sercom##_sercom, _rx, _tx, _txpad, _txpad ) ; \
+  void SERCOM##_sercom##_0_Handler(void) {  Serial##_serialNum.IrqHandler(); } \
+  void SERCOM##_sercom##_1_Handler(void) {  Serial##_serialNum.IrqHandler(); } \
+  void SERCOM##_sercom##_2_Handler(void) {  Serial##_serialNum.IrqHandler(); } \
+  void SERCOM##_sercom##_3_Handler(void) {  Serial##_serialNum.IrqHandler(); }
 
 // Produce TwoWire name(&sercomN, PIN_sda, PIN_scl)
-#define sercom_MakeWire_Pins(_sercomNum, _i2c, _sda, _scl)              \
-  TwoWire _i2c(&sercom##_sercomNum, _sda, _scl);                        \
-  void SERCOM##_sercomNum##_0_Handler(void) {  _i2c.onService(); }      \
-  void SERCOM##_sercomNum##_1_Handler(void) {  _i2c.onService(); }      \
-  void SERCOM##_sercomNum##_2_Handler(void) {  _i2c.onService(); }      \
-  void SERCOM##_sercomNum##_3_Handler(void) {  _i2c.onService(); }
+  #define SERCOMLIB_MakeWire(_sercom, _i2c, _sda, _scl) \
+  TwoWire WIRE##_i2c(&sercom##_sercom, _sda, _scl); \
+  void SERCOM##_sercom##_0_Handler(void) {  _i2c.onService(); } \
+  void SERCOM##_sercom##_1_Handler(void) {  _i2c.onService(); } \
+  void SERCOM##_sercom##_2_Handler(void) {  _i2c.onService(); } \
+  void SERCOM##_sercom##_3_Handler(void) {  _i2c.onService(); }
 #endif // SAMD51
 
-#if SAMD21_SERIES || defined(_SAMD21_) || SAMD10_SERIES || SAMD11_SERIES
+#if SAMD21_SERIES || SAMD10_SERIES || SAMD11_SERIES || \
+  defined(_SAMD21_) || defined(_SAMD10_) || defined(_SAMD11_)
 
 // Use this form where there are pre-defined PIN_SERIALn_RX and
-//  PIN_SERIALn_TX symbols  (This is actually rare.)
-#define sercom_MakeUart(_sercomNum, _serNumber)                         \
-  Uart Serial##_serNumber( &sercom##_sercomNum, PIN_Serial##_serNumber##_RX, \
-                           PIN_SERIAL##_serNumber##_TX,                 \
-                           SERCOM_RX_PAD_1, UART_TX_PAD_0 ) ;           \
-  void SERCOM##_sercomNum##_Handler(void) {  SERCOM##_serNumber.IrqHandler(); }
+//  PIN_SERIALn_TX symbols
+#define SERCOMLIB_MakeSerial(_sercom, _serialNum) \
+  Uart Serial##_serialNum( &sercom##_sercom, PIN_Serial##_serialNum##_RX,  \
+             PIN_SERIAL##_serialNum##_TX,                    \
+             SERCOM_RX_PAD_1, UART_TX_PAD_0 ) ;              \
+  void SERCOM##_sercom##_Handler(void) {   Serial##_serialNum.IrqHandler(); }
 
 // Use this form to specify the TX and RX pin numbers (Arduino Pin numbers.)
-#define sercom_MakeUart_Pins(_sercomNum, _serName, _rx, _tx)            \
-  Uart _serName( &sercom##_sercomNum, _rx, _tx, SERCOM_RX_PAD_1, UART_TX_PAD_0 ) ; \
-  void SERCOM##_sercomNum##_Handler(void) {  _serName.IrqHandler(); }
+#define SERCOMLIB_MakeSerialPins(_sercom, _serialNum, _rx, _tx) \
+  Uart Serial##_serialNum( &sercom##_sercom, _rx, _tx, SERCOM_RX_PAD_1, UART_TX_PAD_0 ) ; \
+  void SERCOM##_sercom##_Handler(void) { Serial##_serialNum.IrqHandler(); }
 
 // Use this form to specify the TX and RX pin numbers AND PAD designators
-#define sercom_MakeUart_Pads(_sercomNum, _serName, _rx, _tx, _rxpad, _txpad) \
-  Uart _serName( &sercom##_sercomNum, _rx, _tx, _txpad, _txpad ) ;      \
-  void SERCOM##_sercomNum##_Handler(void) {  _serName.IrqHandler(); }
-
-#define sercom_MakeWire_Pins(_sercomNum, _i2cName, _sda, _scl)          \
-  TwoWire _i2cName(&sercom##_sercomNum, _sda, _scl);                    \
-  void SERCOM##_sercomNum##_Handler(void) {  _i2cName.onService(); }
-
+#define SERCOMLIB_MakeSerialPinsPads(_sercom, _serialNum, _rx, _tx, _rxpad, _txpad) \
+  Uart Serial##_serialNum( &sercom##_sercom, _rx, _tx, _rxpad, _txpad ) ; \
+  void SERCOM##_sercom##_Handler(void) { Serial##_serialNum.IrqHandler(); }
 #endif // SAMD21
+
+/*
+ * Some handy shortcuts.
+ * I believe these should be consistant across boards, since SPI and I2C
+ * are more limited in PAD usage.
+ * They do require the MISO/etc pin names to be defined in the variant.
+ */ 
+#define SERCOMLIB_MakeSerial_OnWIRE(_sercom, _serialNum) \
+  SERCOMLIB_MakeSerialPinsPads(_sercom, _serialNum, SCL, SDA, SERCOM_RX_PAD_1, UART_TX_PAD_0)
+
+#define SERCOMLIB_MakeSerial_OnSPI(_sercom, _serialNum) \
+  SERCOMLIB_MakeSerialPinsPads(_sercom, _serialNum, MISO, MOSI, SERCOM_RX_PAD_1, UART_TX_PAD_2)
