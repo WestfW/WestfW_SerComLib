@@ -1,6 +1,7 @@
-#include "sercomlib.h"
+#include <WestfW_SerComLib.h>
+
 /*
- *    July 2020 by Bill Westfield.  Released to the public domain.
+ *    July 2020, Jan 2023 by Bill Westfield.  Released to the public domain.
  *
  *   Attach the extra SERCOM peripherals to Serial Ports (UART mode.)
  *   Note that for Grand Central, the required PIN_SERIALn_RX/etc 
@@ -19,7 +20,7 @@ SERCOMLIB_MakeSerial(  5,      4)   // Serial4 - pins 14 and 15
 #include <Wire.h>
 SERCOMLIB_MakeWire( 7,   Wire7, 82, 81)  // Wire7 on SPI pins.
 #else
-SERCOMLIB_MakeSerialPins(3, 5, 21, 20)  // SerialI2C - I2C pins
+SERCOMLIB_MakeSerialPins_OnWire(3, 5)  // SerialI2C - I2C pins
 #endif
 
 void pullup (int pin) {
